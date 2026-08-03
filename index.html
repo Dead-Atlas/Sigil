@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#120f0c">
+<meta name="description" content="Sigil — hand-gesture and voice visual playground">
+<title>Sigil</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta property="og:title" content="Sigil">
+<meta property="og:description" content="Hand-gesture and voice visual playground">
+<meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="orb orb-a" aria-hidden="true"></div>
+  <div class="orb orb-b" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header class="hero">
+      <img class="brand-mark" src="assets/logo-mark.png" width="88" height="88" alt="Sigil">
+      <p class="eyebrow">hand · vision</p>
+      <h1 class="brand">Sigil</h1>
+      <p class="mode-line"><span id="modeLabel">در انتظار</span></p>
+    </header>
+
+    <div class="stage" id="stage" data-mode="idle">
+      <div class="stage-glow" aria-hidden="true"></div>
+      <video id="video" playsinline muted></video>
+      <canvas id="output"></canvas>
+      <canvas id="work" class="offscreen"></canvas>
+      <canvas id="bg" class="offscreen"></canvas>
+      <canvas id="tmp" class="offscreen"></canvas>
+      <canvas id="mask" class="offscreen"></canvas>
+      <canvas id="grade" class="offscreen"></canvas>
+      <canvas id="freeze" class="offscreen"></canvas>
+      <canvas id="trail" class="offscreen"></canvas>
+
+      <div class="frame-ornament tl"></div>
+      <div class="frame-ornament tr"></div>
+      <div class="frame-ornament bl"></div>
+      <div class="frame-ornament br"></div>
+      <div class="scanline" id="scanline"></div>
+      <div class="flash" id="flash" aria-hidden="true">
+        <div class="flash-core"></div>
+        <div class="flash-ring r1"></div>
+        <div class="flash-ring r2"></div>
+        <div class="flash-wipe"></div>
+        <div class="flash-bars"></div>
+        <div class="flash-title" id="flashTitle"></div>
+      </div>
+
+      <div class="hud">
+        <span id="handTag">—</span>
+        <span id="stateTag">idle</span>
+      </div>
+
+      <div class="calibrate-banner" id="calibrateBanner"></div>
+
+      <div class="overlay-msg" id="startOverlay">
+        <div class="overlay-card">
+          <img class="overlay-rune" src="assets/logo-mark.png" width="72" height="72" alt="" aria-hidden="true">
+          <button id="startBtn" type="button">گشودن دریچه</button>
+        </div>
+      </div>
+    </div>
+
+        <div class="sigil-board" id="sigilDock">
+      <section class="sigil-group">
+        <header class="sigil-group-head">
+          <span class="sigil-group-num">I</span>
+          <div class="sigil-group-copy">
+            <h2>One Hand</h2>
+            <p>یک دست جلوی دوربین</p>
+          </div>
+        </header>
+        <div class="sigil-rows">
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5" role="listbox" aria-label="تک‌دست">
+<button class="sigil" data-mode="beam" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M30 42V14a3.5 3.5 0 0 1 7 0v28"/>
+            <path d="M37 44v-8a3 3 0 0 1 5.5-1"/>
+            <path d="M42 46v-4a3 3 0 0 1 5 1"/>
+            <path d="M24 42c-2.5-1-5-3.5-5-7a3.5 3.5 0 0 1 6-2.5"/>
+            <path d="M30 42h14l1 5a11 11 0 0 1-11 12h-1A12 12 0 0 1 21 47v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Beam</span>
+          <span class="sigil-hint">۱ انگشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="mirror" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 40V16a3.5 3.5 0 0 1 7 0v20"/>
+            <path d="M33 38V14a3.5 3.5 0 0 1 7 0v26"/>
+            <path d="M40 42v-6a3 3 0 0 1 5 .5"/>
+            <path d="M22 40c-2-1-4-3-4-6a3.5 3.5 0 0 1 6-2.5"/>
+            <path d="M26 40h16l1.5 6A11 11 0 0 1 32 58h-1A12 12 0 0 1 19 46v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Mirror</span>
+          <span class="sigil-hint">۲ انگشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="rift" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 40V16a3.2 3.2 0 0 1 6.4 0v18"/>
+            <path d="M30.4 38V14a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M36.8 40V18a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M43.2 44v-6a3 3 0 0 1 4.5.5"/>
+            <path d="M20 40c-2-1-4-3-4-6a3.2 3.2 0 0 1 5.5-2"/>
+            <path d="M24 40h20l1.2 5A11 11 0 0 1 34 58h-1A12 12 0 0 1 21 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Rift</span>
+          <span class="sigil-hint">۳ انگشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="prism" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 38V16a3 3 0 0 1 6 0v16"/>
+            <path d="M28 36V14a3 3 0 0 1 6 0v20"/>
+            <path d="M34 36V14a3 3 0 0 1 6 0v20"/>
+            <path d="M40 38V18a3 3 0 0 1 6 0v22"/>
+            <path d="M22 38h24l1 5A11 11 0 0 1 36 56h-2A13 13 0 0 1 21 43v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Prism</span>
+          <span class="sigil-hint">۴ انگشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="clear" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 36V18a4 4 0 0 1 8 0v14"/>
+            <path d="M28 32V14a4 4 0 0 1 8 0v20"/>
+            <path d="M36 34V16a4 4 0 0 1 8 0v22"/>
+            <path d="M44 38V24a4 4 0 0 1 7 2.6L49 48a12 12 0 0 1-12 10h-5A14 14 0 0 1 18 44v-4"/>
+            <path d="M20 36c-3-1.5-6-4-6-8a4 4 0 0 1 7-2.5"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Reveal</span>
+          <span class="sigil-hint">۵ انگشت</span>
+        </span>
+      </button>
+        </div>
+      </div>
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5" role="listbox" aria-label="تک‌دست">
+<button class="sigil" data-mode="cloak" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 30v-4a4 4 0 0 1 8 0v4"/>
+            <path d="M30 30v-6a4 4 0 0 1 8 0v6"/>
+            <path d="M38 30v-4a4 4 0 0 1 8 0v8"/>
+            <path d="M20 32c-3-1.2-6-3-6-7a4 4 0 0 1 7-3c1.5 0 2.5.8 3 1.8"/>
+            <path d="M22 30h20l2 8a12 12 0 0 1-12 14h-2A13 13 0 0 1 17 40v-4z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Phantom</span>
+          <span class="sigil-hint">مشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="still" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M28 36c-1-6-2-12 2-16a5 5 0 0 1 8 4c0 3-2 6-3 9"/>
+            <path d="M28 38h16l1.2 5A11 11 0 0 1 34 56h-1A12 12 0 0 1 21 44v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Still</span>
+          <span class="sigil-hint">شست بالا</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="down" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M36 28c1 6 2 12-2 16a5 5 0 0 1-8-4c0-3 2-6 3-9"/>
+            <path d="M22 26h16l-1.2 8A11 11 0 0 1 26 48h-1A12 12 0 0 1 13 36v-4z" transform="rotate(180 32 36)"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Down</span>
+          <span class="sigil-hint">شست پایین</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="ember" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M32 42V16a3.5 3.5 0 0 1 7 0v26"/>
+            <path d="M24 40c-1-5 0-10 5-13"/>
+            <path d="M32 42h14l.8 4A11 11 0 0 1 36 58h-1A12 12 0 0 1 23 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Ember</span>
+          <span class="sigil-hint">شکل L</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="okay" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="28" cy="28" r="7"/>
+            <path d="M34 34V16a3 3 0 0 1 6 0v20"/>
+            <path d="M40 36V18a3 3 0 0 1 6 0v20"/>
+            <path d="M30 40h18l1 4A10 10 0 0 1 39 56h-1A11 11 0 0 1 27 45v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Okay</span>
+          <span class="sigil-hint">اوکی</span>
+        </span>
+      </button>
+        </div>
+      </div>
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5" role="listbox" aria-label="تک‌دست">
+<button class="sigil" data-mode="void" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="30" cy="30" r="6"/>
+            <path d="M28 40h14l1 3A9 9 0 0 1 34 54h-1A10 10 0 0 1 23 44v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Void</span>
+          <span class="sigil-hint">نیشگون</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="spark" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M40 40V16a3.2 3.2 0 0 1 6.4 0v24"/>
+            <path d="M28 42h20l1 4A11 11 0 0 1 38 58h-1A12 12 0 0 1 25 46v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Spark</span>
+          <span class="sigil-hint">انگشت کوچک</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="echo" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 36c-2-5 0-11 5-13"/>
+            <path d="M40 22c3 1 5 5 4 10v10"/>
+            <path d="M29 40h15l1 5A11 11 0 0 1 34 58h-1A12 12 0 0 1 21 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Echo</span>
+          <span class="sigil-hint">شست+کوچک</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="metal" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 40V16a3.2 3.2 0 0 1 6.4 0v20"/>
+            <path d="M40 40V18a3.2 3.2 0 0 1 6.4 0v20"/>
+            <path d="M26 40h20l1 5A11 11 0 0 1 36 58h-1A12 12 0 0 1 23 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Horns</span>
+          <span class="sigil-hint">شاخ</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="web" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 40V16a3.2 3.2 0 0 1 6.4 0v20"/>
+            <path d="M40 40V18a3.2 3.2 0 0 1 6.4 0v20"/>
+            <path d="M22 38c-1-5 1-10 6-12"/>
+            <path d="M26 40h20l1 5A11 11 0 0 1 36 58h-1A12 12 0 0 1 23 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Web</span>
+          <span class="sigil-hint">شاخ+شست</span>
+        </span>
+      </button>
+        </div>
+      </div>
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5" role="listbox" aria-label="تک‌دست">
+<button class="sigil" data-mode="spite" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M32 42V14a3.5 3.5 0 0 1 7 0v28"/>
+            <path d="M28 42h18l1 4A11 11 0 0 1 36 58h-1A12 12 0 0 1 23 46v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Spite</span>
+          <span class="sigil-hint">انگشت وسط</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="ink" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M34 40V18a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M40.4 38V16a3.2 3.2 0 0 1 6.4 0v24"/>
+            <path d="M28 42h20l1 4A11 11 0 0 1 38 58h-1A12 12 0 0 1 25 46v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Ink</span>
+          <span class="sigil-hint">حلقه+کوچک</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="bloom" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 40V16a3.5 3.5 0 0 1 7 0v20"/>
+            <path d="M33 38V14a3.5 3.5 0 0 1 7 0v26"/>
+            <path d="M22 38c-1-5 1-10 6-12"/>
+            <path d="M26 40h16l1.5 6A11 11 0 0 1 32 58h-1A12 12 0 0 1 19 46v-2z"/>
+            <circle cx="32" cy="28" r="4" opacity=".5"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Bloom</span>
+          <span class="sigil-hint">پیروزی+شست</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="tide" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 40V16a3.2 3.2 0 0 1 6.4 0v18"/>
+            <path d="M30.4 38V14a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M36.8 40V18a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M20 38c-1-5 1-10 6-12"/>
+            <path d="M24 40h20l1.2 5A11 11 0 0 1 34 58h-1A12 12 0 0 1 21 46v-3z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Tide</span>
+          <span class="sigil-hint">۳+شست</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="coil" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M30 42V16a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M36.4 40V18a3.2 3.2 0 0 1 6.4 0v22"/>
+            <path d="M26 42h20l1 4A11 11 0 0 1 36 58h-1A12 12 0 0 1 23 46v-2z"/>
+            <path d="M28 24c6-4 12 2 8 8" opacity=".7"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Coil</span>
+          <span class="sigil-hint">وسط+حلقه</span>
+        </span>
+      </button>
+        </div>
+      </div>
+        </div>
+      </section>
+
+      <section class="sigil-group sigil-group-duo">
+        <header class="sigil-group-head">
+          <span class="sigil-group-num">II</span>
+          <div class="sigil-group-copy">
+            <h2>Two Hands</h2>
+            <p>هر دو دست هم‌زمان</p>
+          </div>
+        </header>
+        <div class="sigil-rows">
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5 sigil-rail-duo" role="listbox" aria-label="دو دست">
+<button class="sigil" data-mode="piano" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="28" width="48" height="22" rx="2"/>
+            <path d="M14 28v22M20 28v22M26 28v22M32 28v22M38 28v22M44 28v22M50 28v22"/>
+            <rect x="16" y="28" width="5" height="12" fill="currentColor" stroke="none" opacity=".85"/>
+            <rect x="22" y="28" width="5" height="12" fill="currentColor" stroke="none" opacity=".85"/>
+            <rect x="34" y="28" width="5" height="12" fill="currentColor" stroke="none" opacity=".85"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Keys</span>
+          <span class="sigil-hint">کف پایین · دایره=خروج</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="twin" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 34V22a2.5 2.5 0 0 1 5 0v8"/>
+            <path d="M14 34h12l.8 3A7 7 0 0 1 20 46h-1A8 8 0 0 1 11 38v-2z"/>
+            <path d="M38 34V22a2.5 2.5 0 0 1 5 0v8"/>
+            <path d="M38 34h12l.8 3A7 7 0 0 1 44 46h-1A8 8 0 0 1 35 38v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Twin</span>
+          <span class="sigil-hint">۲× کف‌دست</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="bind" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 30h12l1 5a7 7 0 0 1-7 8h-1a8 8 0 0 1-8-8v-2z"/>
+            <path d="M38 30h12l1 5a7 7 0 0 1-7 8h-1a8 8 0 0 1-8-8v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Bind</span>
+          <span class="sigil-hint">۲× مشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="boost" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 34c-1-5 0-10 3-13a4 4 0 0 1 6 3"/>
+            <path d="M16 36h12l.8 4A7 7 0 0 1 22 50h-1A8 8 0 0 1 13 40v-2z"/>
+            <path d="M42 34c-1-5 0-10 3-13a4 4 0 0 1 6 3"/>
+            <path d="M40 36h12l.8 4A7 7 0 0 1 46 50h-1A8 8 0 0 1 37 40v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Boost</span>
+          <span class="sigil-hint">۲× شست بالا</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="sink" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 30c1 5 2 10-1 13a4 4 0 0 1-6-3"/>
+            <path d="M16 28h12l-.8 6A7 7 0 0 1 20 46h-1A8 8 0 0 1 11 36v-2z"/>
+            <path d="M46 30c-1 5-2 10 1 13a4 4 0 0 0 6-3"/>
+            <path d="M36 28h12l-.8 6A7 7 0 0 0 40 46h-1A8 8 0 0 0 31 36v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Sink</span>
+          <span class="sigil-hint">۲× شست پایین</span>
+        </span>
+      </button>
+        </div>
+      </div>
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-5 sigil-rail-duo" role="listbox" aria-label="دو دست">
+<button class="sigil" data-mode="balance" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 32V22a2.5 2.5 0 0 1 5 0v6"/>
+            <path d="M14 34h12l.8 3A7 7 0 0 1 20 46h-1A8 8 0 0 1 11 38v-2z"/>
+            <path d="M40 32h12l1 5a7 7 0 0 1-7 8h-1a8 8 0 0 1-8-8v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Balance</span>
+          <span class="sigil-hint">کف + مشت</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="aim" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 40V18a2.5 2.5 0 0 1 5 0v22"/>
+            <path d="M39 40V18a2.5 2.5 0 0 1 5 0v22"/>
+            <circle cx="22.5" cy="14" r="2"/><circle cx="41.5" cy="14" r="2"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Aim</span>
+          <span class="sigil-hint">۲× اشاره</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="pray" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 34V22a2.5 2.5 0 0 1 5 0v8"/>
+            <path d="M18 34h10l.6 3A6 6 0 0 1 23 44h-1A7 7 0 0 1 15 37v-1z"/>
+            <path d="M36 34V22a2.5 2.5 0 0 1 5 0v8"/>
+            <path d="M36 34h10l.6 3A6 6 0 0 1 41 44h-1A7 7 0 0 1 33 37v-1z"/>
+            <path d="M28 30h8" opacity=".6"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Pray</span>
+          <span class="sigil-hint">دو کف نزدیک</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="orbit" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 34V20a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M20.4 32V18a2.2 2.2 0 0 1 4.4 0v14"/>
+            <path d="M16 34h12l.6 3A6 6 0 0 1 23 46h-1A7 7 0 0 1 15 38v-2z"/>
+            <path d="M36 34V20a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M40.4 32V18a2.2 2.2 0 0 1 4.4 0v14"/>
+            <path d="M36 34h12l.6 3A6 6 0 0 1 43 46h-1A7 7 0 0 1 35 38v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Orbit</span>
+          <span class="sigil-hint">۲× پیروزی</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="storm" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 34V20a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M26 34V22a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M16 34h16l.8 4A7 7 0 0 1 26 48h-1A8 8 0 0 1 17 40v-2z"/>
+            <path d="M36 34V20a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M46 34V22a2.2 2.2 0 0 1 4.4 0v10"/>
+            <path d="M36 34h16l.8 4A7 7 0 0 1 46 48h-1A8 8 0 0 1 37 40v-2z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Storm</span>
+          <span class="sigil-hint">۲× شاخ</span>
+        </span>
+      </button>
+        </div>
+      </div>
+        </div>
+      </section>
+
+      <section class="sigil-group sigil-group-voice">
+        <header class="sigil-group-head">
+          <span class="sigil-group-num">III</span>
+          <div class="sigil-group-copy">
+            <h2>Voice</h2>
+            <p>با صدا حیوان شو</p>
+          </div>
+        </header>
+        <div class="sigil-rows">
+      <div class="sigil-row">
+        <div class="sigil-rail sigil-rail-voice" role="listbox" aria-label="صدا">
+<button class="sigil" data-mode="cat" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 28l-6-14 12 6"/><path d="M46 28l6-14-12 6"/>
+            <ellipse cx="32" cy="36" rx="16" ry="14"/>
+            <path d="M32 40l-3 3h6z"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Cat</span>
+          <span class="sigil-hint">میو</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="dog" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 30c-2 8 2 16 8 18"/><path d="M50 30c2 8-2 16-8 18"/>
+            <ellipse cx="32" cy="36" rx="14" ry="13"/>
+            <ellipse cx="32" cy="42" rx="7" ry="5"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Dog</span>
+          <span class="sigil-hint">هاپ</span>
+        </span>
+      </button>
+<button class="sigil" data-mode="cow" type="button" disabled>
+        <span class="sigil-hand" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 22c-2-8 2-12 4-12"/><path d="M44 22c2-8-2-12-4-12"/>
+            <ellipse cx="32" cy="36" rx="16" ry="14"/>
+            <ellipse cx="32" cy="42" rx="9" ry="6"/>
+          </svg>
+        </span>
+        <span class="sigil-text">
+          <span class="sigil-name">Cow</span>
+          <span class="sigil-hint">موو</span>
+        </span>
+      </button>
+        </div>
+      </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="resetBgBtn" type="button" disabled>پس‌زمینه</button>
+      <button class="btn" id="muteBtn" type="button" disabled>صدا</button>
+      <button class="btn" id="stopBtn" type="button" disabled>توقف</button>
+    </div>
+
+    <p class="status" id="invStatus">—</p>
+
+    <div class="sr" aria-hidden="true">
+      <span id="bgStatus"></span>
+      <span id="gestureStatus"></span>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="js/audio.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
