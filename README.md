@@ -7,7 +7,7 @@ Hand-gesture and voice-driven visual playground. Webcam effects run entirely in 
 - Invisibility cloak with on-device background calibration
 - One-hand and two-hand gesture modes
 - Voice animals (cat / dog / cow)
-- Air piano (Keys) with index-finger play and two-hand circle to exit
+- Air piano (Keys) with index-finger play and both hands raised to exit
 
 ## Run locally
 
