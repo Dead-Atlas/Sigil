@@ -103,7 +103,8 @@
   let bgFrozen = false;
   let emptyStreak = 0;
   const EMPTY_NEED = 10;
-  const CONFIRM_NEED = 16;
+  const CONFIRM_NEED = 20;
+  const HOLD_LOCK_AT = 12;
   const PERSON_MAX = 0.05;
   let calibStage = 'wait';
   const bgHoldCanvas = document.createElement('canvas');
@@ -1666,19 +1667,7 @@
   }
 
   function refreshBgIfEmpty(){
-    if(!latestSegMask || mode === 'cloak') return;
-    tmpCtx.clearRect(0, 0, W, H);
-    tmpCtx.drawImage(latestSegMask, 0, 0, W, H);
-    const sample = tmpCtx.getImageData(0, 0, W, H).data;
-    let person = 0;
-    for(let i = 0; i < sample.length; i += 32){
-      if(Math.max(sample[i], sample[i + 3]) > 80) person++;
-    }
-    if(person / Math.ceil(sample.length / 32) < 0.025){
-      bgCtx.globalAlpha = 0.35;
-      bgCtx.drawImage(video, 0, 0, W, H);
-      bgCtx.globalAlpha = 1;
-    }
+    return;
   }
 
   function beginCalibration(){
@@ -1897,11 +1886,10 @@
 
       if(calibStage === 'wait'){
         emptyStreak = isEmpty ? emptyStreak + 1 : 0;
+        bgHoldReady = false;
         calibrateBanner.textContent = 'کاملاً از کادر خارج شو…';
         invStatusEl.textContent = 'خارج شو';
         if(emptyStreak >= EMPTY_NEED){
-          bgHoldCtx.drawImage(video, 0, 0, W, H);
-          bgHoldReady = true;
           calibStage = 'confirm';
           emptyStreak = 0;
         }
@@ -1914,6 +1902,10 @@
           invStatusEl.textContent = 'خارج شو';
         } else {
           emptyStreak++;
+          if(emptyStreak <= HOLD_LOCK_AT){
+            bgHoldCtx.drawImage(video, 0, 0, W, H);
+            bgHoldReady = true;
+          }
           const pct = Math.min(100, Math.round(100 * emptyStreak / CONFIRM_NEED));
           calibrateBanner.textContent = pct + '٪';
           invStatusEl.textContent = pct + '٪';
@@ -1926,7 +1918,6 @@
       outCtx.drawImage(video, 0, 0, W, H);
     } else if(phase === 'ready'){
       renderMode();
-      if(mode !== 'cloak' && latestSegMask) refreshBgIfEmpty();
     } else {
       outCtx.drawImage(video, 0, 0, W, H);
     }
