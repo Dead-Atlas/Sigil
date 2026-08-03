@@ -101,11 +101,13 @@
   let mode = 'clear';
   let phase = 'idle';
   let bgReadyFrames = 0;
-  const BG_WARMUP_FRAMES = 45;
+  const BG_BLEND_FRAMES = 28;
+  const BG_CONFIRM_FRAMES = 18;
+  const BG_WARMUP_FRAMES = BG_BLEND_FRAMES + BG_CONFIRM_FRAMES;
   let bgFrozen = false;
   let emptyStreak = 0;
-  const EMPTY_STREAK_NEED = 12;
-  const PERSON_MAX = 0.045;
+  const EMPTY_STREAK_NEED = 16;
+  const PERSON_MAX = 0.028;
   let calibStage = 'wait'; 
 
   let latestSegMask = null;
@@ -1676,10 +1678,17 @@
   }
 
   function lockBackgroundFrame(){
-    bgCtx.globalAlpha = 1;
-    bgCtx.drawImage(video, 0, 0, W, H);
-    bgCtx.globalAlpha = 1;
     bgFrozen = true;
+  }
+
+  function resetCalibrationCapture(){
+    emptyStreak = 0;
+    bgReadyFrames = 0;
+    calibStage = 'wait';
+    bgFrozen = false;
+    bgCtx.globalAlpha = 1;
+    bgCtx.fillStyle = '#000';
+    bgCtx.fillRect(0, 0, W, H);
   }
 
   function finishCalibration(){
@@ -1858,14 +1867,14 @@
         const sample = tmpCtx.getImageData(0, 0, W, H).data;
         let person = 0;
         let total = 0;
-        for(let i = 0; i < sample.length; i += 16){
+        for(let i = 0; i < sample.length; i += 12){
           total++;
-          if(Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 70) person++;
+          if(Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 55) person++;
         }
         personRatio = person / Math.max(1, total);
       }
 
-      const isEmpty = personRatio < PERSON_MAX;
+      const isEmpty = !!latestSegMask && personRatio < PERSON_MAX;
 
       if(calibStage === 'wait'){
         if(isEmpty) emptyStreak++;
@@ -1875,31 +1884,29 @@
         if(emptyStreak >= EMPTY_STREAK_NEED){
           calibStage = 'capture';
           bgReadyFrames = 0;
-          
           bgCtx.globalAlpha = 1;
           bgCtx.drawImage(video, 0, 0, W, H);
           bgCtx.globalAlpha = 1;
           bgReadyFrames = 1;
         }
       } else {
-        
         if(!isEmpty){
-          emptyStreak = 0;
-          calibrateBanner.textContent = 'دوباره خارج شو تا ذخیره کامل شود…';
+          resetCalibrationCapture();
+          calibrateBanner.textContent = 'دوباره کاملاً خارج شو…';
           invStatusEl.textContent = 'خارج شو';
         } else {
           emptyStreak++;
-          bgCtx.globalAlpha = bgReadyFrames < 3 ? 1 : 0.45;
-          bgCtx.drawImage(video, 0, 0, W, H);
-          bgCtx.globalAlpha = 1;
+          if(bgReadyFrames < BG_BLEND_FRAMES){
+            bgCtx.globalAlpha = bgReadyFrames < 3 ? 1 : 0.4;
+            bgCtx.drawImage(video, 0, 0, W, H);
+            bgCtx.globalAlpha = 1;
+          }
           bgReadyFrames++;
           const pct = Math.min(100, Math.round(100 * bgReadyFrames / BG_WARMUP_FRAMES));
           calibrateBanner.textContent = pct + '٪';
           invStatusEl.textContent = pct + '٪';
 
           if(bgReadyFrames >= BG_WARMUP_FRAMES){
-            
-            lockBackgroundFrame();
             finishCalibration();
           }
         }
