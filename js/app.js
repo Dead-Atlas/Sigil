@@ -739,10 +739,10 @@
     outCtx.textAlign = 'center';
     if(pianoExitArmed || pendingGesture === 'xout'){
       outCtx.fillStyle = 'rgba(230,180,90,0.95)';
-      outCtx.fillText('دایره تشخیص داده شد — رها کن تا خارج شوی', W / 2, y0 - 18);
+      outCtx.fillText('خروج… دست‌ها را بالا نگه دار', W / 2, y0 - 18);
     } else {
       outCtx.fillStyle = 'rgba(243,232,212,0.55)';
-      outCtx.fillText('دو دست روبه‌رو · نوک انگشتان دایره بساز = خروج', W / 2, y0 - 18);
+      outCtx.fillText('اشاره خم = نواختن · دو دست باز بالا = خروج', W / 2, y0 - 18);
     }
     outCtx.restore();
   }
