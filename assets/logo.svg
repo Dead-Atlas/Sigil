@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Sigil">
+  <defs>
+    <linearGradient id="b" x1="18" y1="14" x2="110" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f3e8d4"/>
+      <stop offset=".45" stop-color="#d4b36a"/>
+      <stop offset="1" stop-color="#a8864a"/>
+    </linearGradient>
+    <radialGradient id="g" cx="50%" cy="42%" r="55%">
+      <stop stop-color="#1c1712"/>
+      <stop offset="1" stop-color="#120f0c"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#g)"/>
+  <circle cx="64" cy="64" r="46" fill="none" stroke="url(#b)" stroke-width="2.4"/>
+  <circle cx="64" cy="64" r="39.5" fill="none" stroke="url(#b)" stroke-width="1" opacity=".55"/>
+  <g fill="none" stroke="url(#b)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 64c10-18 26-28 36-28s26 10 36 28c-10 18-26 28-36 28S38 82 28 64z" stroke-width="2.2"/>
+    <circle cx="64" cy="64" r="9.5" stroke-width="2"/>
+    <path d="M64 54.5v19M54.5 64h19" stroke-width="1.4" opacity=".85"/>
+    <path d="M42 48c6-8 14-12 22-12s16 4 22 12" stroke-width="1.5" opacity=".7"/>
+    <path d="M42 80c6 8 14 12 22 12s16-4 22-12" stroke-width="1.5" opacity=".7"/>
+  </g>
+  <g fill="url(#b)">
+    <circle cx="64" cy="18" r="2.1"/>
+    <circle cx="64" cy="110" r="2.1"/>
+    <circle cx="18" cy="64" r="2.1"/>
+    <circle cx="110" cy="64" r="2.1"/>
+  </g>
+</svg>
