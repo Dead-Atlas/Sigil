@@ -101,14 +101,20 @@
   let mode = 'clear';
   let phase = 'idle';
   let bgReadyFrames = 0;
-  const BG_BLEND_FRAMES = 28;
-  const BG_CONFIRM_FRAMES = 18;
-  const BG_WARMUP_FRAMES = BG_BLEND_FRAMES + BG_CONFIRM_FRAMES;
+  const BG_CAPTURE_NEED = 36;
+  const BG_LOCK_DELAY = 14;
+  const CALIB_RING_N = 24;
   let bgFrozen = false;
   let emptyStreak = 0;
-  const EMPTY_STREAK_NEED = 16;
-  const PERSON_MAX = 0.028;
-  let calibStage = 'wait'; 
+  const EMPTY_STREAK_NEED = 18;
+  const PERSON_MAX = 0.016;
+  let calibStage = 'wait';
+  const calibRing = Array.from({ length: CALIB_RING_N }, () => {
+    const c = document.createElement('canvas');
+    return { c, ctx: c.getContext('2d', { alpha: false }) };
+  });
+  let calibRingI = 0;
+  let calibRingCount = 0; 
 
   let latestSegMask = null;
   let latestLandmarksList = [];
@@ -159,6 +165,10 @@
     W = w; H = h;
     [outputCanvas, workCanvas, bgCanvas, tmpCanvas, maskCanvas, gradeCanvas, freezeCanvas, trailCanvas, xfadeCanvas]
       .forEach(c => { c.width = W; c.height = H; });
+    calibRing.forEach(slot => {
+      slot.c.width = W;
+      slot.c.height = H;
+    });
     stage.style.aspectRatio = W + ' / ' + H;
   }
 
@@ -1689,6 +1699,9 @@
     freezeReady = false;
     trailReady = false;
     emptyStreak = 0;
+    calibRingI = 0;
+    calibRingCount = 0;
+    latestFaceMesh = null;
     pendingGesture = null;
     latestLandmarksList = [];
     bgCtx.fillStyle = '#000';
@@ -1706,7 +1719,29 @@
     gainR = gainG = gainB = 1;
   }
 
+  function pushCalibRingFrame(){
+    const slot = calibRing[calibRingI];
+    if(slot.c.width !== W || slot.c.height !== H){
+      slot.c.width = W;
+      slot.c.height = H;
+    }
+    slot.ctx.drawImage(video, 0, 0, W, H);
+    calibRingI = (calibRingI + 1) % CALIB_RING_N;
+    calibRingCount = Math.min(CALIB_RING_N, calibRingCount + 1);
+  }
+
+  function pickDelayedCalibFrame(delay){
+    if(calibRingCount <= delay) return null;
+    const idx = (calibRingI - 1 - delay + CALIB_RING_N * 8) % CALIB_RING_N;
+    return calibRing[idx].c;
+  }
+
   function lockBackgroundFrame(){
+    const snap = pickDelayedCalibFrame(BG_LOCK_DELAY);
+    if(snap){
+      bgCtx.globalAlpha = 1;
+      bgCtx.drawImage(snap, 0, 0, W, H);
+    }
     bgFrozen = true;
   }
 
@@ -1715,6 +1750,8 @@
     bgReadyFrames = 0;
     calibStage = 'wait';
     bgFrozen = false;
+    calibRingI = 0;
+    calibRingCount = 0;
     bgCtx.globalAlpha = 1;
     bgCtx.fillStyle = '#000';
     bgCtx.fillRect(0, 0, W, H);
@@ -1879,6 +1916,10 @@
       processingSeg = true;
       segModel.send({ image: video }).catch(() => { processingSeg = false; });
     }
+    if(phase === 'calibrating' && faceModel && !processingFace){
+      processingFace = true;
+      faceModel.send({ image: video }).catch(() => { processingFace = false; });
+    }
     if(phase === 'ready' && !processingHands){
       processingHands = true;
       handsModel.send({ image: video }).catch(() => { processingHands = false; });
@@ -1890,20 +1931,30 @@
 
     if(phase === 'calibrating'){
       let personRatio = 1;
+      let edgePerson = 0;
       if(latestSegMask){
         tmpCtx.clearRect(0, 0, W, H);
         tmpCtx.drawImage(latestSegMask, 0, 0, W, H);
         const sample = tmpCtx.getImageData(0, 0, W, H).data;
         let person = 0;
         let total = 0;
-        for(let i = 0; i < sample.length; i += 12){
-          total++;
-          if(Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 55) person++;
+        const yTop = Math.floor(H * 0.55);
+        for(let y = 0; y < H; y += 4){
+          for(let x = 0; x < W; x += 4){
+            const i = (y * W + x) * 4;
+            total++;
+            const hit = Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 40;
+            if(hit){
+              person++;
+              if(y < yTop) edgePerson++;
+            }
+          }
         }
         personRatio = person / Math.max(1, total);
       }
 
-      const isEmpty = !!latestSegMask && personRatio < PERSON_MAX;
+      const faceInFrame = !!latestFaceMesh;
+      const isEmpty = !!latestSegMask && personRatio < PERSON_MAX && edgePerson < 8 && !faceInFrame;
 
       if(calibStage === 'wait'){
         if(isEmpty) emptyStreak++;
@@ -1913,9 +1964,9 @@
         if(emptyStreak >= EMPTY_STREAK_NEED){
           calibStage = 'capture';
           bgReadyFrames = 0;
-          bgCtx.globalAlpha = 1;
-          bgCtx.drawImage(video, 0, 0, W, H);
-          bgCtx.globalAlpha = 1;
+          calibRingI = 0;
+          calibRingCount = 0;
+          pushCalibRingFrame();
           bgReadyFrames = 1;
         }
       } else {
@@ -1925,17 +1976,13 @@
           invStatusEl.textContent = 'خارج شو';
         } else {
           emptyStreak++;
-          if(bgReadyFrames < BG_BLEND_FRAMES){
-            bgCtx.globalAlpha = bgReadyFrames < 3 ? 1 : 0.4;
-            bgCtx.drawImage(video, 0, 0, W, H);
-            bgCtx.globalAlpha = 1;
-          }
+          pushCalibRingFrame();
           bgReadyFrames++;
-          const pct = Math.min(100, Math.round(100 * bgReadyFrames / BG_WARMUP_FRAMES));
+          const pct = Math.min(100, Math.round(100 * bgReadyFrames / BG_CAPTURE_NEED));
           calibrateBanner.textContent = pct + '٪';
           invStatusEl.textContent = pct + '٪';
 
-          if(bgReadyFrames >= BG_WARMUP_FRAMES){
+          if(bgReadyFrames >= BG_CAPTURE_NEED && calibRingCount > BG_LOCK_DELAY){
             finishCalibration();
           }
         }
