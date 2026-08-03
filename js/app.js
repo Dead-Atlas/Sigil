@@ -151,6 +151,7 @@
   let trailReady = false;
   let pianoTipLatch = Object.create(null);
   let pianoGlow = Object.create(null);
+  let pianoExitArmed = false;
   let transitionUntil = 0;
   const TRANSITION_MS = 480;
 
@@ -251,6 +252,7 @@
     if(mode === 'piano' || prev === 'piano'){
       pianoTipLatch = Object.create(null);
       pianoGlow = Object.create(null);
+      pianoExitArmed = false;
     }
     if(mode !== 'cat' && mode !== 'dog' && mode !== 'cow'){
       smoothFace = null;
@@ -373,53 +375,66 @@
     return null;
   }
 
+  function meanTips(lm){
+    const ids = [4, 8, 12, 16, 20];
+    let x = 0, y = 0;
+    for(let i = 0; i < ids.length; i++){
+      x += lm[ids[i]].x;
+      y += lm[ids[i]].y;
+    }
+    return { x: x / ids.length, y: y / ids.length };
+  }
+
   function isTwoHandCircle(a, b){
+    if(isPalmDownOpen(a) && isPalmDownOpen(b)) return false;
+
     const aw = a[0], bw = b[0];
     const wristDist = dist(aw, bw);
-    if(wristDist < 0.15 || wristDist > 0.52) return false;
+    if(wristDist < 0.12 || wristDist > 0.65) return false;
+    if(Math.abs(aw.x - bw.x) < 0.07) return false;
+    if(Math.abs(aw.y - bw.y) > 0.28) return false;
+
+    const mid = { x: (aw.x + bw.x) * 0.5, y: (aw.y + bw.y) * 0.5 };
+    if(mid.y > 0.78) return false;
+
+    const ca = meanTips(a);
+    const cb = meanTips(b);
+    const tipGap = Math.hypot(ca.x - cb.x, ca.y - cb.y);
+    if(tipGap < 0.035 || tipGap > wristDist * 0.9) return false;
+
+    const wristToMidA = Math.hypot(aw.x - mid.x, aw.y - mid.y);
+    const wristToMidB = Math.hypot(bw.x - mid.x, bw.y - mid.y);
+    const tipToMidA = Math.hypot(ca.x - mid.x, ca.y - mid.y);
+    const tipToMidB = Math.hypot(cb.x - mid.x, cb.y - mid.y);
+    if(tipToMidA > wristToMidA * 0.95) return false;
+    if(tipToMidB > wristToMidB * 0.95) return false;
 
     const tipIdx = [4, 8, 12, 16, 20];
     const tips = [];
-    for(let h = 0; h < 2; h++){
-      const hand = h === 0 ? a : b;
-      for(let t = 0; t < tipIdx.length; t++) tips.push(hand[tipIdx[t]]);
+    for(let t = 0; t < tipIdx.length; t++){
+      tips.push(a[tipIdx[t]], b[tipIdx[t]]);
     }
-
-    let cx = 0, cy = 0;
-    for(let i = 0; i < tips.length; i++){
-      cx += tips[i].x;
-      cy += tips[i].y;
-    }
-    cx /= tips.length;
-    cy /= tips.length;
-
-    const midWx = (aw.x + bw.x) * 0.5;
-    const midWy = (aw.y + bw.y) * 0.5;
-    if(Math.hypot(cx - midWx, cy - midWy) > 0.14) return false;
-    if((aw.x - cx) * (bw.x - cx) >= 0) return false;
-    if(cy > 0.72) return false;
-
     let rSum = 0;
     const rs = new Array(tips.length);
     for(let i = 0; i < tips.length; i++){
-      rs[i] = Math.hypot(tips[i].x - cx, tips[i].y - cy);
+      rs[i] = Math.hypot(tips[i].x - mid.x, tips[i].y - mid.y);
       rSum += rs[i];
     }
     const rMean = rSum / tips.length;
-    if(rMean < 0.09 || rMean > 0.3) return false;
+    if(rMean < 0.06 || rMean > 0.34) return false;
 
     let varSum = 0;
     for(let i = 0; i < rs.length; i++){
       const d0 = rs[i] - rMean;
       varSum += d0 * d0;
     }
-    if(Math.sqrt(varSum / rs.length) / rMean > 0.34) return false;
+    if(Math.sqrt(varSum / rs.length) / rMean > 0.48) return false;
 
     const openCount = (lm) => {
       const s = fingerState(lm);
       return [s.idx, s.mid, s.rng, s.pnk].filter(Boolean).length;
     };
-    if(openCount(a) < 2 || openCount(b) < 2) return false;
+    if(openCount(a) < 1 || openCount(b) < 1) return false;
 
     const aPoint = fingerExtended(a, 8, 6, 5) && !fingerExtended(a, 12, 10, 9) && !fingerExtended(a, 16, 14, 13);
     const bPoint = fingerExtended(b, 8, 6, 5) && !fingerExtended(b, 12, 10, 9) && !fingerExtended(b, 16, 14, 13);
@@ -429,11 +444,20 @@
   }
 
   function detectGestureFromHands(multi){
-    if(!multi || !multi.length) return null;
+    if(!multi || !multi.length){
+      pianoExitArmed = false;
+      return null;
+    }
     if(multi.length >= 2){
-      if(mode === 'piano' && isTwoHandCircle(multi[0], multi[1])) return 'xout';
+      if(mode === 'piano' && isTwoHandCircle(multi[0], multi[1])){
+        pianoExitArmed = true;
+        return 'xout';
+      }
+      pianoExitArmed = false;
       const two = detectTwoHand(multi[0], multi[1]);
       if(two) return two;
+    } else {
+      pianoExitArmed = false;
     }
     return classifyOne(multi[0]);
   }
@@ -459,7 +483,7 @@
       if(k !== next) modeVotes[k] = Math.max(0, (modeVotes[k] || 0) - 1);
     });
 
-    const need = mode === 'piano' ? VOTE_NEED + 2 : VOTE_NEED;
+    const need = next === 'xout' ? 2 : VOTE_NEED;
     if(modeVotes[next] < need){
       if(pendingGesture && pendingGesture !== next) pendingGesture = null;
       return;
@@ -471,7 +495,7 @@
       return;
     }
 
-    const confirm = mode === 'piano' ? CONFIRM_MS + 280 : CONFIRM_MS;
+    const confirm = next === 'xout' ? 160 : CONFIRM_MS;
     if(performance.now() - pendingSince >= confirm){
       if(next === 'xout') setMode('clear', true);
       else setMode(next, true);
@@ -754,9 +778,14 @@
     outCtx.translate(W, 0);
     outCtx.scale(-1, 1);
     outCtx.font = '600 12px Vazirmatn, sans-serif';
-    outCtx.fillStyle = 'rgba(243,232,212,0.55)';
     outCtx.textAlign = 'center';
-    outCtx.fillText('فقط اشاره · خم کن تا بزنی · دو دست دایره = خروج', W / 2, y0 - 18);
+    if(pianoExitArmed || pendingGesture === 'xout'){
+      outCtx.fillStyle = 'rgba(230,180,90,0.95)';
+      outCtx.fillText('دایره تشخیص داده شد — رها کن تا خارج شوی', W / 2, y0 - 18);
+    } else {
+      outCtx.fillStyle = 'rgba(243,232,212,0.55)';
+      outCtx.fillText('دو دست روبه‌رو · نوک انگشتان دایره بساز = خروج', W / 2, y0 - 18);
+    }
     outCtx.restore();
   }
 
