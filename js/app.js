@@ -101,13 +101,15 @@
   let mode = 'clear';
   let phase = 'idle';
   let bgReadyFrames = 0;
-  const BG_CAPTURE_NEED = 36;
-  const BG_LOCK_DELAY = 14;
+  const BG_CAPTURE_NEED = 30;
+  const BG_LOCK_DELAY = 10;
   const CALIB_RING_N = 24;
   let bgFrozen = false;
   let emptyStreak = 0;
-  const EMPTY_STREAK_NEED = 18;
-  const PERSON_MAX = 0.016;
+  let occupiedStreak = 0;
+  const EMPTY_STREAK_NEED = 12;
+  const OCCUPIED_RESET_NEED = 4;
+  const PERSON_MAX = 0.04;
   let calibStage = 'wait';
   const calibRing = Array.from({ length: CALIB_RING_N }, () => {
     const c = document.createElement('canvas');
@@ -1699,6 +1701,7 @@
     freezeReady = false;
     trailReady = false;
     emptyStreak = 0;
+    occupiedStreak = 0;
     calibRingI = 0;
     calibRingCount = 0;
     latestFaceMesh = null;
@@ -1731,22 +1734,23 @@
   }
 
   function pickDelayedCalibFrame(delay){
-    if(calibRingCount <= delay) return null;
-    const idx = (calibRingI - 1 - delay + CALIB_RING_N * 8) % CALIB_RING_N;
+    if(calibRingCount < 1) return null;
+    const useDelay = Math.min(delay, Math.max(0, calibRingCount - 1));
+    const idx = (calibRingI - 1 - useDelay + CALIB_RING_N * 8) % CALIB_RING_N;
     return calibRing[idx].c;
   }
 
   function lockBackgroundFrame(){
     const snap = pickDelayedCalibFrame(BG_LOCK_DELAY);
-    if(snap){
-      bgCtx.globalAlpha = 1;
-      bgCtx.drawImage(snap, 0, 0, W, H);
-    }
+    bgCtx.globalAlpha = 1;
+    if(snap) bgCtx.drawImage(snap, 0, 0, W, H);
+    else bgCtx.drawImage(video, 0, 0, W, H);
     bgFrozen = true;
   }
 
   function resetCalibrationCapture(){
     emptyStreak = 0;
+    occupiedStreak = 0;
     bgReadyFrames = 0;
     calibStage = 'wait';
     bgFrozen = false;
@@ -1755,6 +1759,21 @@
     bgCtx.globalAlpha = 1;
     bgCtx.fillStyle = '#000';
     bgCtx.fillRect(0, 0, W, H);
+  }
+
+  function faceBlocksCalibration(){
+    if(!latestFaceMesh || latestFaceMesh.length < 10) return false;
+    let minY = 1, maxY = 0, minX = 1, maxX = 0;
+    for(let i = 0; i < latestFaceMesh.length; i += 5){
+      const p = latestFaceMesh[i];
+      if(p.x < minX) minX = p.x;
+      if(p.x > maxX) maxX = p.x;
+      if(p.y < minY) minY = p.y;
+      if(p.y > maxY) maxY = p.y;
+    }
+    const h = maxY - minY;
+    const w = maxX - minX;
+    return h > 0.1 && w > 0.08;
   }
 
   function finishCalibration(){
@@ -1931,39 +1950,34 @@
 
     if(phase === 'calibrating'){
       let personRatio = 1;
-      let edgePerson = 0;
       if(latestSegMask){
         tmpCtx.clearRect(0, 0, W, H);
         tmpCtx.drawImage(latestSegMask, 0, 0, W, H);
         const sample = tmpCtx.getImageData(0, 0, W, H).data;
         let person = 0;
         let total = 0;
-        const yTop = Math.floor(H * 0.55);
-        for(let y = 0; y < H; y += 4){
-          for(let x = 0; x < W; x += 4){
-            const i = (y * W + x) * 4;
-            total++;
-            const hit = Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 40;
-            if(hit){
-              person++;
-              if(y < yTop) edgePerson++;
-            }
-          }
+        for(let i = 0; i < sample.length; i += 16){
+          total++;
+          if(Math.max(sample[i], sample[i + 1], sample[i + 2], sample[i + 3]) > 70) person++;
         }
         personRatio = person / Math.max(1, total);
       }
 
-      const faceInFrame = !!latestFaceMesh;
-      const isEmpty = !!latestSegMask && personRatio < PERSON_MAX && edgePerson < 8 && !faceInFrame;
+      const isEmpty = !!latestSegMask && personRatio < PERSON_MAX && !faceBlocksCalibration();
 
       if(calibStage === 'wait'){
-        if(isEmpty) emptyStreak++;
-        else emptyStreak = 0;
+        if(isEmpty){
+          emptyStreak++;
+          occupiedStreak = 0;
+        } else {
+          emptyStreak = 0;
+        }
         calibrateBanner.textContent = 'کاملاً از کادر خارج شو…';
         invStatusEl.textContent = 'خارج شو';
         if(emptyStreak >= EMPTY_STREAK_NEED){
           calibStage = 'capture';
           bgReadyFrames = 0;
+          occupiedStreak = 0;
           calibRingI = 0;
           calibRingCount = 0;
           pushCalibRingFrame();
@@ -1971,10 +1985,16 @@
         }
       } else {
         if(!isEmpty){
-          resetCalibrationCapture();
-          calibrateBanner.textContent = 'دوباره کاملاً خارج شو…';
-          invStatusEl.textContent = 'خارج شو';
+          occupiedStreak++;
+          if(occupiedStreak >= OCCUPIED_RESET_NEED){
+            resetCalibrationCapture();
+            calibrateBanner.textContent = 'دوباره کاملاً خارج شو…';
+            invStatusEl.textContent = 'خارج شو';
+          } else {
+            calibrateBanner.textContent = 'ثابت بمان — خارج از کادر…';
+          }
         } else {
+          occupiedStreak = 0;
           emptyStreak++;
           pushCalibRingFrame();
           bgReadyFrames++;
